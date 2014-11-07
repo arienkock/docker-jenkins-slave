@@ -7,7 +7,7 @@ set -e
 		echo >&2 '  Did you forget to add -e MYSQL_ROOT_PASSWORD=... ?'
 		exit 1
 	fi
-	
+	cd /usr/local/mysql	
 	mysql_install_db --user=mysql --datadir=/var/lib/mysql
 	
 	# These statements _must_ be on individual lines, and _must_ end with
@@ -35,7 +35,7 @@ set -e
 	
 	echo 'FLUSH PRIVILEGES ;' >> "$TEMP_FILE"
 	
-	set -- "$@" --init-file="$TEMP_FILE"
+	#set -- "$@" --init-file="$TEMP_FILE"
 #fi
 
 chown -R mysql:mysql /var/lib/mysql
