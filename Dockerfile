@@ -82,8 +82,9 @@ RUN echo "source /opt/nvm/nvm.sh" >> /root/.profile
 # Adjust perms for jenkins user
 RUN chown -R jenkins /opt/nvm
 RUN touch /home/jenkins/.profile
-RUN echo "source /opt/nvm/nvm.sh" >> /home/jenkins/.profile
-RUN chown jenkins /home/jenkins/.profile
+RUN echo "source /opt/nvm/nvm.sh" >> /home/jenkins/.bashrc
+RUN echo 'export PATH=$PATH:/usr/local/mysql/bin:/usr/local/mysql/scripts' >> /home/jenkins/.bashrc
+# RUN chown jenkins /home/jenkins/.profile
 
 # Browsers
 RUN apt-get update && apt-get -y install xvfb x11-xkb-utils xfonts-100dpi xfonts-75dpi xfonts-scalable xfonts-cyrillic dbus-x11 libfontconfig1-dev && apt-get clean

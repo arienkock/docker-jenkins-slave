@@ -31,5 +31,6 @@ done
 
 chown -R jenkins:jenkins /home/jenkins
 
-sudo -i mysqld --datadir=/var/lib/mysql --user=mysql --init-file='/tmp/mysql-first-time.sql' &
+sudo -i /usr/local/mysql/bin/mysqld --datadir=/var/lib/mysql --user=mysql --init-file='/tmp/mysql-first-time.sql' &
+disown
 /usr/sbin/sshd -D
