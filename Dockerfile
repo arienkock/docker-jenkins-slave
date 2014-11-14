@@ -43,7 +43,7 @@ ENV MYSQL_MAJOR 5.5
 ENV MYSQL_VERSION 5.5.40
 RUN apt-get update && apt-get install -y perl --no-install-recommends && rm -rf /var/lib/apt/lists/*
 RUN apt-get update && apt-get install -y libaio1 && rm -rf /var/lib/apt/lists/*
-# RUN gpg --keyserver pgp.mit.edu --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5
+RUN gpg --keyserver pgp.mit.edu --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5
 RUN apt-get update && apt-get install -y curl --no-install-recommends && rm -rf /var/lib/apt/lists/* \
 	&& curl -SL "http://dev.mysql.com/get/Downloads/MySQL-$MYSQL_MAJOR/mysql-$MYSQL_VERSION-linux2.6-x86_64.tar.gz" -o mysql.tar.gz \
 	&& curl -SL "http://mysql.he.net/Downloads/MySQL-$MYSQL_MAJOR/mysql-$MYSQL_VERSION-linux2.6-x86_64.tar.gz.asc" -o mysql.tar.gz.asc \
@@ -57,8 +57,6 @@ RUN apt-get update && apt-get install -y curl --no-install-recommends && rm -rf 
 	&& { find /usr/local/mysql -type f -executable -exec strip --strip-all '{}' + || true; } \
 	&& apt-get purge -y --auto-remove binutils
 ENV PATH $PATH:/usr/local/mysql/bin:/usr/local/mysql/scripts
-
-EXPOSE 3306
 
 # Load scripts
 COPY bootstrap bootstrap
@@ -84,7 +82,6 @@ RUN chown -R jenkins /opt/nvm
 RUN touch /home/jenkins/.profile
 RUN echo "source /opt/nvm/nvm.sh" >> /home/jenkins/.bashrc
 RUN echo 'export PATH=$PATH:/usr/local/mysql/bin:/usr/local/mysql/scripts' >> /home/jenkins/.bashrc
-# RUN chown jenkins /home/jenkins/.profile
 
 # Browsers
 RUN apt-get update && apt-get -y install xvfb x11-xkb-utils xfonts-100dpi xfonts-75dpi xfonts-scalable xfonts-cyrillic dbus-x11 libfontconfig1-dev && apt-get clean
@@ -114,8 +111,52 @@ ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu/
 COPY fonts/sourcesanspro /usr/share/fonts/sourcesanspro
 RUN fc-cache -v /usr/share/fonts/sourcesanspro
 
+# Install Tomcat6
+ENV CATALINA_HOME /usr/local/tomcat
+ENV PATH $CATALINA_HOME/bin:$PATH
+RUN mkdir -p "$CATALINA_HOME" && chown jenkins:jenkins "$CATALINA_HOME"
+WORKDIR $CATALINA_HOME
+USER jenkins
+
+# see https://www.apache.org/dist/tomcat/tomcat-8/KEYS
+RUN gpg --keyserver pgp.mit.edu --recv-keys \
+	05AB33110949707C93A279E3D3EFE6B686867BA6 \
+	07E48665A34DCAFAE522E5E6266191C37C037D42 \
+	47309207D818FFD8DCD3F83F1931D684307A10A5 \
+	541FBE7D8F78B25E055DDEE13C370389288584E7 \
+	61B832AC2F1C5A90F0F9B00A1C506407564C17A3 \
+	79F7026C690BAA50B92CD8B66A3AD3F4F22C4FED \
+	80FF76D88A969FE46108558A80B953A041E49465 \
+	8B39757B1D8A994DF2433ED58B3A601F08C975E5 \
+	A27677289986DB50844682F8ACB77FC2E86E29AC \
+	A9C5DF4D22E99998D9875A5110C01C5A2F6059E7 \
+	B3F49CD3B9BD2996DA90F817ED3873F5D3262722 \
+	DCFD35E0BF8CA7344752DE8B6FB21E8933C60243 \
+	F3A04C595DB5B6A5F1ECA43E3B7BBB100D811BBE \
+	F7DA48BB64BCB84ECBA7EE6935CD23C10D498E23
+
+ENV TOMCAT_MAJOR 6
+ENV TOMCAT_VERSION 6.0.41
+ENV TOMCAT_TGZ_URL https://www.apache.org/dist/tomcat/tomcat-$TOMCAT_MAJOR/v$TOMCAT_VERSION/bin/apache-tomcat-$TOMCAT_VERSION.tar.gz
+
+RUN curl -SL "$TOMCAT_TGZ_URL" -o tomcat.tar.gz \
+	&& curl -SL "$TOMCAT_TGZ_URL.asc" -o tomcat.tar.gz.asc \
+	&& gpg --verify tomcat.tar.gz.asc \
+	&& tar -xvf tomcat.tar.gz --strip-components=1 \
+	&& rm bin/*.bat \
+	&& rm tomcat.tar.gz*
+
 # Standard SSH port
 EXPOSE 22
+# Expose Tomcat port
+EXPOSE 8080
+# MySQL port
+EXPOSE 3306
 
+USER root
+COPY init.sh /init.sh
+RUN chmod +x /init.sh
+USER jenkins
 # Startup services when running the container
-CMD ["./bootstrap/init.sh"]
+CMD ["sudo", "/usr/sbin/sshd", "-D"]
+ENTRYPOINT ["/init.sh"]
