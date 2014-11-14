@@ -156,7 +156,7 @@ EXPOSE 3306
 USER root
 COPY init.sh /init.sh
 RUN chmod +x /init.sh
-USER jenkins
+
 # Startup services when running the container
-CMD ["sudo", "/usr/sbin/sshd", "-D"]
+CMD ["/usr/sbin/sshd", "-D"]
 ENTRYPOINT ["/init.sh"]

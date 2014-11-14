@@ -6,6 +6,6 @@
 
 chown -R jenkins:jenkins /home/jenkins
 
-sudo -i /usr/local/mysql/bin/mysqld --datadir=/var/lib/mysql --user=mysql --init-file='/tmp/mysql-first-time.sql' &
+/usr/local/mysql/bin/mysqld --datadir=/var/lib/mysql --user=mysql --init-file='/tmp/mysql-first-time.sql' &
 disown
 exec "$@"
